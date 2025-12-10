@@ -1,13 +1,30 @@
-import React from 'react';
-import { StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AppColors } from '@/constants/AppColors';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAuth } from '@/components/auth-context'; // Import useAuth
+import { router } from 'expo-router';
 
 export default function LoginScreen() {
+  const { signIn, isLoading } = useAuth(); // Get signIn and isLoading from context
   const colorScheme = useColorScheme();
   const themeColors = AppColors[colorScheme ?? 'light'];
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter both email and password.");
+      return;
+    }
+    const success = await signIn(email, password);
+    if (!success) {
+      Alert.alert("Login Failed", "Invalid email or password.");
+    }
+  };
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: themeColors.background }]}>
@@ -18,17 +35,29 @@ export default function LoginScreen() {
         placeholderTextColor={themeColors.secondaryText}
         keyboardType="email-address"
         autoCapitalize="none"
+        value={email}
+        onChangeText={setEmail}
       />
       <TextInput
         style={[styles.input, { borderColor: themeColors.border, color: themeColors.text }]}
         placeholder="Password"
         placeholderTextColor={themeColors.secondaryText}
         secureTextEntry
+        value={password}
+        onChangeText={setPassword}
       />
-      <TouchableOpacity style={[styles.button, { backgroundColor: themeColors.primary }]}>
-        <ThemedText style={styles.buttonText}>Log In</ThemedText>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: themeColors.primary }]}
+        onPress={handleSignIn}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <ThemedText style={styles.buttonText}>Log In</ThemedText>
+        )}
       </TouchableOpacity>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => router.replace('/(auth)/register')}>
         <ThemedText style={[styles.linkText, { color: themeColors.primary }]}>
           Don't have an account? Register
         </ThemedText>

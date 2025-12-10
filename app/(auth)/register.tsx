@@ -1,13 +1,31 @@
-import React from 'react';
-import { StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AppColors } from '@/constants/AppColors';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAuth } from '@/components/auth-context'; // Import useAuth
+import { router } from 'expo-router';
 
 export default function RegisterScreen() {
+  const { signUp, isLoading } = useAuth(); // Get signUp and isLoading from context
   const colorScheme = useColorScheme();
   const themeColors = AppColors[colorScheme ?? 'light'];
+
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSignUp = async () => {
+    if (!username || !email || !password) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
+    const success = await signUp(username, email, password);
+    if (!success) {
+      Alert.alert("Registration Failed", "Something went wrong. Please try again.");
+    }
+  };
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: themeColors.background }]}>
@@ -17,6 +35,8 @@ export default function RegisterScreen() {
         placeholder="Username"
         placeholderTextColor={themeColors.secondaryText}
         autoCapitalize="none"
+        value={username}
+        onChangeText={setUsername}
       />
       <TextInput
         style={[styles.input, { borderColor: themeColors.border, color: themeColors.text }]}
@@ -24,17 +44,29 @@ export default function RegisterScreen() {
         placeholderTextColor={themeColors.secondaryText}
         keyboardType="email-address"
         autoCapitalize="none"
+        value={email}
+        onChangeText={setEmail}
       />
       <TextInput
         style={[styles.input, { borderColor: themeColors.border, color: themeColors.text }]}
         placeholder="Password"
         placeholderTextColor={themeColors.secondaryText}
         secureTextEntry
+        value={password}
+        onChangeText={setPassword}
       />
-      <TouchableOpacity style={[styles.button, { backgroundColor: themeColors.primary }]}>
-        <ThemedText style={styles.buttonText}>Register</ThemedText>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: themeColors.primary }]}
+        onPress={handleSignUp}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <ThemedText style={styles.buttonText}>Register</ThemedText>
+        )}
       </TouchableOpacity>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
         <ThemedText style={[styles.linkText, { color: themeColors.primary }]}>
           Already have an account? Log In
         </ThemedText>
