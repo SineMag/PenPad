@@ -1,12 +1,21 @@
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
-import { router, useSegments } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router, useSegments } from 'expo-router';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  password: string;
+  createdAt: string;
+}
 
 interface AuthContextType {
   signIn: (email: string, password: string) => Promise<boolean>;
   signOut: () => void;
   signUp: (username: string, email: string, password: string) => Promise<boolean>;
-  user: any | null; // Replace 'any' with a proper User type later
+  updateProfile: (username: string, email: string, password: string) => Promise<boolean>;
+  user: User | null;
   isLoading: boolean;
 }
 
@@ -20,7 +29,7 @@ export function useAuth() {
   return context;
 }
 
-function useProtectedRoute(user: any | null, isLoading: boolean) {
+function useProtectedRoute(user: User | null, isLoading: boolean) {
   const segments = useSegments();
   const inAuthGroup = segments[0] === '(auth)';
 
@@ -38,10 +47,10 @@ function useProtectedRoute(user: any | null, isLoading: boolean) {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Simulate loading user from storage
+  // Load user from storage on startup
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -63,41 +72,112 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const authContextValue = useMemo(() => ({
     signIn: async (email, password) => {
       setIsLoading(true);
-      // Simulate API call
-      return new Promise(resolve => {
-        setTimeout(async () => {
-          if (email === 'test@example.com' && password === 'password') {
-            const tempUser = { email, username: 'testuser' };
-            await AsyncStorage.setItem('user', JSON.stringify(tempUser));
-            setUser(tempUser);
-            resolve(true);
-          } else {
-            console.warn('Invalid credentials');
-            resolve(false);
-          }
-          setIsLoading(false);
-        }, 1000);
-      });
+      try {
+        // Get stored users
+        const usersJson = await AsyncStorage.getItem('users');
+        const users: User[] = usersJson ? JSON.parse(usersJson) : [];
+        
+        // Find user with matching email and password
+        const foundUser = users.find(u => u.email === email && u.password === password);
+        
+        if (foundUser) {
+          await AsyncStorage.setItem('user', JSON.stringify(foundUser));
+          setUser(foundUser);
+          return true;
+        } else {
+          return false;
+        }
+      } catch (error) {
+        console.error('Sign in error:', error);
+        return false;
+      } finally {
+        setIsLoading(false);
+      }
     },
     signOut: async () => {
       setIsLoading(true);
-      await AsyncStorage.removeItem('user');
-      setUser(null);
-      setIsLoading(false);
+      try {
+        await AsyncStorage.removeItem('user');
+        setUser(null);
+      } catch (error) {
+        console.error('Sign out error:', error);
+      } finally {
+        setIsLoading(false);
+      }
     },
     signUp: async (username, email, password) => {
       setIsLoading(true);
-      // Simulate API call
-      return new Promise(resolve => {
-        setTimeout(async () => {
-          // For now, any signup is successful and logs in the user
-          const tempUser = { email, username };
-          await AsyncStorage.setItem('user', JSON.stringify(tempUser));
-          setUser(tempUser);
-          resolve(true);
-          setIsLoading(false);
-        }, 1000);
-      });
+      try {
+        // Get existing users
+        const usersJson = await AsyncStorage.getItem('users');
+        const users: User[] = usersJson ? JSON.parse(usersJson) : [];
+        
+        // Check if email already exists
+        if (users.find(u => u.email === email)) {
+          return false;
+        }
+        
+        // Create new user
+        const newUser: User = {
+          id: Date.now().toString(),
+          username,
+          email,
+          password,
+          createdAt: new Date().toISOString()
+        };
+        
+        // Save user to users array
+        users.push(newUser);
+        await AsyncStorage.setItem('users', JSON.stringify(users));
+        
+        // Log in the new user
+        await AsyncStorage.setItem('user', JSON.stringify(newUser));
+        setUser(newUser);
+        return true;
+      } catch (error) {
+        console.error('Sign up error:', error);
+        return false;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    updateProfile: async (username, email, password) => {
+      setIsLoading(true);
+      try {
+        if (!user) return false;
+        
+        // Get existing users
+        const usersJson = await AsyncStorage.getItem('users');
+        const users: User[] = usersJson ? JSON.parse(usersJson) : [];
+        
+        // Find and update user
+        const userIndex = users.findIndex(u => u.id === user.id);
+        if (userIndex === -1) return false;
+        
+        // Check if email is being changed and if it already exists
+        if (email !== user.email && users.find(u => u.email === email)) {
+          return false;
+        }
+        
+        // Update user data
+        const updatedUser: User = {
+          ...users[userIndex],
+          username,
+          email,
+          password
+        };
+        
+        users[userIndex] = updatedUser;
+        await AsyncStorage.setItem('users', JSON.stringify(users));
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        return true;
+      } catch (error) {
+        console.error('Update profile error:', error);
+        return false;
+      } finally {
+        setIsLoading(false);
+      }
     },
     user,
     isLoading,

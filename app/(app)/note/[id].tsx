@@ -1,37 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { useNotes } from '@/components/notes-context';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AppColors } from '@/constants/AppColors';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Note, NoteCategory } from '@/types/note';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { getNoteById, saveNote, deleteNote, Note } from '@/utils/storage'; // Import storage functions
 
 export default function NoteDetailScreen() {
   const { id } = useLocalSearchParams();
   const colorScheme = useColorScheme();
   const themeColors = AppColors[colorScheme ?? 'light'];
+  const { notes, updateNote, deleteNote } = useNotes();
 
   const [note, setNote] = useState<Note | null>(null);
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState<NoteCategory>('personal');
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    const fetchNote = async () => {
+    const fetchNote = () => {
       if (id) {
         setIsLoading(true);
         try {
-          const fetchedNote = await getNoteById(String(id));
-          if (fetchedNote) {
-            setNote(fetchedNote);
-            setTitle(fetchedNote.title);
-            setCategory(fetchedNote.category);
-            setContent(fetchedNote.content);
+          const foundNote = notes.find(n => n.id === String(id));
+          if (foundNote) {
+            setNote(foundNote);
+            setTitle(foundNote.title || '');
+            setCategory(foundNote.category);
+            setContent(foundNote.content);
           } else {
             Alert.alert("Error", "Note not found.");
             router.back();
@@ -45,23 +47,20 @@ export default function NoteDetailScreen() {
       }
     };
     fetchNote();
-  }, [id]);
+  }, [id, notes]);
 
   const handleSaveNote = async () => {
-    if (!note || !content) {
+    if (!note || !content.trim()) {
       Alert.alert("Error", "Note content cannot be empty.");
       return;
     }
     setIsSaving(true);
     try {
-      const updatedNote = {
-        ...note,
-        title,
-        category,
-        content,
-        updatedAt: new Date().toISOString(),
-      };
-      await saveNote(updatedNote);
+      await updateNote(note.id, {
+        title: title.trim() || undefined,
+        content: content.trim(),
+        category
+      });
       Alert.alert("Success", "Note updated successfully!");
       router.back();
     } catch (error) {
@@ -81,19 +80,21 @@ export default function NoteDetailScreen() {
           text: "Cancel",
           style: "cancel"
         },
-        { text: "Delete", onPress: async () => {
+        { 
+          text: "Delete", 
+          onPress: async () => {
             if (note) {
-                setIsDeleting(true);
-                try {
-                    await deleteNote(note.id);
-                    Alert.alert("Success", "Note deleted successfully!");
-                    router.back();
-                } catch (error) {
-                    console.error("Error deleting note:", error);
-                    Alert.alert("Error", "Failed to delete note.");
-                } finally {
-                    setIsDeleting(false);
-                }
+              setIsDeleting(true);
+              try {
+                await deleteNote(note.id);
+                Alert.alert("Success", "Note deleted successfully!");
+                router.back();
+              } catch (error) {
+                console.error("Error deleting note:", error);
+                Alert.alert("Error", "Failed to delete note.");
+              } finally {
+                setIsDeleting(false);
+              }
             }
           },
           style: 'destructive'
@@ -117,6 +118,8 @@ export default function NoteDetailScreen() {
       </ThemedView>
     );
   }
+
+  const categories: NoteCategory[] = ['work', 'study', 'personal'];
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: themeColors.background }]}>
@@ -142,31 +145,64 @@ export default function NoteDetailScreen() {
           ),
         }}
       />
-      <ThemedText type="title" style={[styles.title, { color: themeColors.text }]}>{title || "No Title"}</ThemedText>
+      
+      <View style={styles.header}>
+        <ThemedText type="title" style={{ color: themeColors.text }}>
+          {title || "No Title"}
+        </ThemedText>
+        <ThemedText style={[styles.dateText, { color: themeColors.secondaryText }]}>
+          Created: {new Date(note.createdAt).toLocaleDateString()}
+        </ThemedText>
+        {note.updatedAt !== note.createdAt && (
+          <ThemedText style={[styles.dateText, { color: themeColors.secondaryText }]}>
+            Updated: {new Date(note.updatedAt).toLocaleDateString()}
+          </ThemedText>
+        )}
+      </View>
+
       <TextInput
         style={[styles.input, { borderColor: themeColors.border, color: themeColors.text }]}
-        placeholder="Title"
+        placeholder="Title (Optional)"
         placeholderTextColor={themeColors.secondaryText}
         value={title}
         onChangeText={setTitle}
       />
-      <TextInput
-        style={[styles.input, { borderColor: themeColors.border, color: themeColors.text }]}
-        placeholder="Category"
-        placeholderTextColor={themeColors.secondaryText}
-        value={category}
-        onChangeText={setCategory}
-      />
+
+      <ThemedText style={[styles.label, { color: themeColors.text }]}>Category</ThemedText>
+      <View style={styles.categoryContainer}>
+        {categories.map((cat) => (
+          <TouchableOpacity
+            key={cat}
+            style={[
+              styles.categoryButton,
+              { 
+                backgroundColor: category === cat ? themeColors.primary : themeColors.cardBackground,
+                borderColor: themeColors.border
+              }
+            ]}
+            onPress={() => setCategory(cat)}
+          >
+            <ThemedText style={{
+              color: category === cat ? '#FFFFFF' : themeColors.text,
+              textTransform: 'capitalize'
+            }}>
+              {cat}
+            </ThemedText>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <TextInput
         style={[styles.contentInput, { borderColor: themeColors.border, color: themeColors.text }]}
         placeholder="Note Content"
         placeholderTextColor={themeColors.secondaryText}
         multiline
-        numberOfLines={6}
+        numberOfLines={8}
         textAlignVertical="top"
         value={content}
         onChangeText={setContent}
       />
+
       <TouchableOpacity
         style={[styles.button, { backgroundColor: themeColors.primary }]}
         onPress={handleSaveNote}
@@ -187,18 +223,39 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  header: {
+    alignItems: 'center',
     marginBottom: 20,
-    textAlign: 'center',
+  },
+  dateText: {
+    fontSize: 12,
+    opacity: 0.7,
+    marginTop: 4,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
   },
   input: {
     width: '100%',
     padding: 15,
     borderWidth: 1,
     borderRadius: 8,
-    marginBottom: 10,
+    marginBottom: 20,
+    fontSize: 16,
+  },
+  categoryContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    gap: 10,
+  },
+  categoryButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
   },
   contentInput: {
     width: '100%',
@@ -206,17 +263,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     marginBottom: 20,
-    minHeight: 120,
+    minHeight: 150,
+    fontSize: 16,
   },
   button: {
     width: '100%',
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 10,
   },
   buttonText: {
-    color: '#FFFFFF', // White text on primary button
+    color: '#FFFFFF',
     fontWeight: 'bold',
+    fontSize: 16,
   },
 });

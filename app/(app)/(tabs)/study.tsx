@@ -10,20 +10,22 @@ import { router } from 'expo-router';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-export default function AllNotesScreen() {
+export default function StudyScreen() {
   const colorScheme = useColorScheme();
   const themeColors = AppColors[colorScheme ?? 'light'];
-  const { filteredNotes } = useNotes();
+  const { getNotesByCategory } = useNotes();
+  
+  const studyNotes = getNotesByCategory('study');
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <View style={styles.header}>
         <ThemedText type="title" style={{ color: themeColors.primary }}>
-          All Notes
+          Study Notes
         </ThemedText>
         <TouchableOpacity
           style={[styles.addButton, { backgroundColor: themeColors.primary }]}
-          onPress={() => router.push('/note/add')}
+          onPress={() => router.push('/note/add?category=study')}
         >
           <MaterialCommunityIcons name="plus" size={24} color="#FFFFFF" />
         </TouchableOpacity>
@@ -32,7 +34,7 @@ export default function AllNotesScreen() {
       <SearchBar />
       <SortOptions />
       
-      <NotesList notes={filteredNotes} />
+      <NotesList notes={studyNotes} />
     </ThemedView>
   );
 }
