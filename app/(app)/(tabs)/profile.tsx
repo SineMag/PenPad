@@ -18,6 +18,7 @@ export default function ProfileScreen() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -60,7 +61,7 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     Alert.alert(
       "Sign Out",
       "Are you sure you want to sign out?",
@@ -71,7 +72,10 @@ export default function ProfileScreen() {
         },
         {
           text: "Sign Out",
-          onPress: signOut,
+          onPress: async () => {
+            setIsSigningOut(true);
+            await signOut();
+          },
           style: 'destructive'
         }
       ]
@@ -145,10 +149,16 @@ export default function ProfileScreen() {
         <TouchableOpacity
           style={[styles.logoutButton, { borderColor: themeColors.border }]}
           onPress={handleSignOut}
-          disabled={isLoading}
+          disabled={isLoading || isSigningOut}
         >
-          <MaterialCommunityIcons name="logout" size={20} color={themeColors.primary} />
-          <ThemedText style={[styles.linkText, { color: themeColors.primary }]}>Sign Out</ThemedText>
+          {isSigningOut ? (
+            <ActivityIndicator color={themeColors.primary} size="small" />
+          ) : (
+            <>
+              <MaterialCommunityIcons name="logout" size={20} color={themeColors.primary} />
+              <ThemedText style={[styles.linkText, { color: themeColors.primary }]}>Sign Out</ThemedText>
+            </>
+          )}
         </TouchableOpacity>
       </View>
     </ThemedView>

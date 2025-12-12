@@ -22,6 +22,7 @@ export default function NoteDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     const fetchNote = () => {
@@ -72,35 +73,24 @@ export default function NoteDetailScreen() {
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      "Delete Note",
-      "Are you sure you want to delete this note?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        { 
-          text: "Delete", 
-          onPress: async () => {
-            if (note) {
-              setIsDeleting(true);
-              try {
-                await deleteNote(note.id);
-                Alert.alert("Success", "Note deleted successfully!");
-                router.back();
-              } catch (error) {
-                console.error("Error deleting note:", error);
-                Alert.alert("Error", "Failed to delete note.");
-              } finally {
-                setIsDeleting(false);
-              }
-            }
-          },
-          style: 'destructive'
-        }
-      ]
-    );
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (note) {
+      setIsDeleting(true);
+      try {
+        await deleteNote(note.id);
+        setShowDeleteModal(false);
+        Alert.alert("Success", "Note deleted successfully!");
+        router.back();
+      } catch (error) {
+        console.error("Error deleting note:", error);
+        Alert.alert("Error", "Failed to delete note.");
+      } finally {
+        setIsDeleting(false);
+      }
+    }
   };
 
   if (isLoading) {
@@ -214,6 +204,19 @@ export default function NoteDetailScreen() {
           <ThemedText style={styles.buttonText}>Save Changes</ThemedText>
         )}
       </TouchableOpacity>
+
+      <ConfirmationModal
+        visible={showDeleteModal}
+        title="Delete Note"
+        message="Are you sure you want to delete this note? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteModal(false)}
+        isLoading={isDeleting}
+        icon="delete"
+        confirmButtonStyle="destructive"
+      />
     </ThemedView>
   );
 }

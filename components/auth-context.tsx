@@ -99,6 +99,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         await AsyncStorage.removeItem('user');
         setUser(null);
+        // Explicitly navigate to login
+        router.replace('/(auth)/login');
       } catch (error) {
         console.error('Sign out error:', error);
       } finally {
