@@ -26,31 +26,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="work"
+        name="explore"
         options={{
-          title: 'Work',
-          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="briefcase" size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="study"
-        options={{
-          title: 'Study',
-          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="book-open-variant" size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="personal"
-        options={{
-          title: 'Personal',
-          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="home-heart" size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="account" size={24} color={color} />,
+          title: 'Explore',
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="compass" size={24} color={color} />,
         }}
       />
     </Tabs>
