@@ -1,12 +1,33 @@
 import { AppColors } from '@/constants/AppColors';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Tabs } from 'expo-router';
+import { Platform, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Sidebar } from '@/components/Sidebar';
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const themeColors = AppColors[colorScheme ?? 'light'];
+  if (isDesktop) {
+    // Desktop layout with sidebar
+    return (
+      <View style={{ flexDirection: 'row', flex: 1 }}>
+        <Sidebar />
+        <View style={{ flex: 1, backgroundColor: themeColors.background }}>
+          <Tabs
+            screenOptions={{
+              tabBarStyle: { display: 'none' }, // Hide bottom tabs on desktop
+              headerShown: false,
+            }}>
+            <Tabs.Screen name="index" options={{ href: '/(app)/(tabs)' }} />
+            <Tabs.Screen name="work" options={{ href: '/(app)/(tabs)/work' }} />
+            <Tabs.Screen name="study" options={{ href: '/(app)/(tabs)/study' }} />
+            <Tabs.Screen name="personal" options={{ href: '/(app)/(tabs)/personal' }} />
+            <Tabs.Screen name="profile" options={{ href: '/(app)/(tabs)/profile' }} />
+          </Tabs>
+        </View>
+      </View>
+    );
+  }
 
+  // Mobile layout with bottom tabs
   return (
     <Tabs
       screenOptions={{
