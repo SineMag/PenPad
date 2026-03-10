@@ -4,6 +4,8 @@
 
 PenPad is a note-focused Expo app that uses Expo Router for file-based navigation.
 
+### Hosted link to app: https://penpad.onrender.com
+
 ## Project structure
 
 - `app/`: App routes and screens (Expo Router file-based routing).
