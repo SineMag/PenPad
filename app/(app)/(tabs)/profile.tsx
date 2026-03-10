@@ -5,7 +5,7 @@ import { AppColors } from '@/constants/AppColors';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export default function ProfileScreen() {
@@ -62,6 +62,16 @@ export default function ProfileScreen() {
   };
 
   const handleSignOut = async () => {
+    if (Platform.OS === 'web') {
+      setIsSigningOut(true);
+      try {
+        await signOut();
+      } finally {
+        setIsSigningOut(false);
+      }
+      return;
+    }
+
     Alert.alert(
       "Sign Out",
       "Are you sure you want to sign out?",
@@ -72,9 +82,9 @@ export default function ProfileScreen() {
         },
         {
           text: "Sign Out",
-          onPress: async () => {
+          onPress: () => {
             setIsSigningOut(true);
-            await signOut();
+            signOut().finally(() => setIsSigningOut(false));
           },
           style: 'destructive'
         }

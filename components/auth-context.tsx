@@ -12,7 +12,7 @@ interface User {
 
 interface AuthContextType {
   signIn: (email: string, password: string) => Promise<boolean>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   signUp: (username: string, email: string, password: string) => Promise<boolean>;
   updateProfile: (username: string, email: string, password: string) => Promise<boolean>;
   user: User | null;
