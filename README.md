@@ -20,7 +20,7 @@ PenPad is a note-focused Expo app that uses Expo Router for file-based navigatio
 1. Clone the repository.
 
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/SineMag/PenPad.git
    ```
 
 2. Move into the project.
