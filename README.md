@@ -4,6 +4,8 @@ m i<img src="https://socialify.git.ci/SineMag/PenPad/image?language=1&owner=1&na
 
 PenPad is a note-focused Expo app that uses Expo Router for file-based navigation.
 
+### Hosted link to app: https://penpad.onrender.com
+
 ## Project structure
 
 - `app/`: App routes and screens (Expo Router file-based routing).
@@ -20,7 +22,7 @@ PenPad is a note-focused Expo app that uses Expo Router for file-based navigatio
 1. Clone the repository.
 
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/SineMag/PenPad.git
    ```
 
 2. Move into the project.
