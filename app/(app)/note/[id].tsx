@@ -1,3 +1,4 @@
+import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useNotes } from '@/components/notes-context';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -141,11 +142,11 @@ export default function NoteDetailScreen() {
           {title || "No Title"}
         </ThemedText>
         <ThemedText style={[styles.dateText, { color: themeColors.secondaryText }]}>
-          Created: {new Date(note.createdAt).toLocaleDateString()}
+          Created: {new Date(note.createdAt).toLocaleString()}
         </ThemedText>
         {note.updatedAt !== note.createdAt && (
           <ThemedText style={[styles.dateText, { color: themeColors.secondaryText }]}>
-            Updated: {new Date(note.updatedAt).toLocaleDateString()}
+            Updated: {new Date(note.updatedAt).toLocaleString()}
           </ThemedText>
         )}
       </View>

@@ -113,31 +113,30 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
     setNotes(prev => prev.filter(note => note.id !== id));
   };
 
-  const getNotesByCategory = (category: NoteCategory): Note[] => {
-    return notes.filter(note => note.category === category);
-  };
+  // Helper function to apply filtering and sorting
+  const applyFilteringAndSorting = (notesList: Note[], currentFilters: NoteFilters) => {
+    let filtered = [...notesList];
 
-  // Filter and sort notes
-  const filteredNotes = useMemo(() => {
-    let filtered = [...notes];
-
-    // Apply search filter
-    if (filters.searchQuery && filters.searchQuery.trim()) {
-      const query = filters.searchQuery.toLowerCase().trim();
+    // Apply search filter - matches every word in the query
+    if (currentFilters.searchQuery && currentFilters.searchQuery.trim()) {
+      const query = currentFilters.searchQuery.toLowerCase().trim();
+      const words = query.split(/\s+/);
       filtered = filtered.filter(note => 
-        note.title?.toLowerCase().includes(query) ||
-        note.content.toLowerCase().includes(query)
+        words.every(word => 
+          note.title?.toLowerCase().includes(word) ||
+          note.content.toLowerCase().includes(word)
+        )
       );
     }
 
     // Apply category filter
-    if (filters.category) {
-      filtered = filtered.filter(note => note.category === filters.category);
+    if (currentFilters.category) {
+      filtered = filtered.filter(note => note.category === currentFilters.category);
     }
 
     // Apply sorting
-    const sortBy = filters.sortBy || 'createdAt';
-    const sortOrder = filters.sortOrder || 'desc';
+    const sortBy = currentFilters.sortBy || 'createdAt';
+    const sortOrder = currentFilters.sortOrder || 'desc';
     
     filtered.sort((a, b) => {
       const dateA = new Date(a[sortBy]).getTime();
@@ -146,6 +145,15 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
     });
 
     return filtered;
+  };
+
+  const getNotesByCategory = (category: NoteCategory): Note[] => {
+    return applyFilteringAndSorting(notes, { ...filters, category });
+  };
+
+  // Filter and sort notes for the general list
+  const filteredNotes = useMemo(() => {
+    return applyFilteringAndSorting(notes, filters);
   }, [notes, filters]);
 
   const contextValue = useMemo(() => ({
